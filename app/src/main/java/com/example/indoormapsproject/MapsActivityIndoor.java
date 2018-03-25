@@ -41,7 +41,6 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
  */
 public class MapsActivityIndoor extends AppCompatActivity
         implements OnMapReadyCallback {
-
     private static final String TAG = MapsActivityIndoor.class.getSimpleName();
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
@@ -68,7 +67,6 @@ public class MapsActivityIndoor extends AppCompatActivity
     private String[] nearbyPlaceAddresses;
     private String[] nearbyPlaceAttributions;
     private LatLng[] nearbyPlaceLatLngs;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,14 +77,13 @@ public class MapsActivityIndoor extends AppCompatActivity
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
 
+        // Retrieve the content view that renders the map.
+        setContentView(R.layout.activity_maps);
 
         // Build the map.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
-        // Retrieve the content view that renders the map.
-        setContentView(R.layout.activity_maps);
 
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null);
@@ -391,6 +388,24 @@ public class MapsActivityIndoor extends AppCompatActivity
 
     private void init(){
         mMap.setIndoorEnabled(true);
+
+        mMap.setOnMapClickListener(new OnMapClickListener() {
+            public void onMapClick(LatLng selectPlace) {
+                mMap.addMarker(new MarkerOptions().position(selectPlace)
+                        .title(String.valueOf(selectPlace.latitude)
+                                + ", " + String.valueOf(selectPlace.longitude)));
+            }
+        });
+
+        mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+            public boolean onMarkerClick(Marker selectPlace) {
+                selectPlace.remove();
+                Toast.makeText(getApplicationContext()
+                        , "Remove Marker " + String.valueOf(selectPlace.getId())
+                        , Toast.LENGTH_SHORT).show();
+                return true;
+            }
+        });
     }
 
 }
