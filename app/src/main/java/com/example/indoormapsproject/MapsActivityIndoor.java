@@ -15,6 +15,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -33,7 +34,8 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
-
+import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 /**
  * An activity that displays a map showing the place at the device's current location.
  */
@@ -47,32 +49,25 @@ public class MapsActivityIndoor extends AppCompatActivity
     // The entry points to the Places API.
     private GeoDataClient mGeoDataClient;
     private PlaceDetectionClient mPlaceDetectionClient;
-
     // The entry point to the Fused Location Provider.
     private FusedLocationProviderClient mFusedLocationProviderClient;
-
-    // A default location (Sydney, Australia) and default zoom to use when location permission is
-    // not granted.
     private final LatLng mDefaultLocation = new LatLng(13.746830, 100.535066); //SIAM
     //private final LatLng mDefaultLocation = new LatLng(13.6467208,100.6794231); //MEGA
     private static final int DEFAULT_ZOOM = 18;
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
-
-    // The geographical location where the device is currently located. That is, the last-known
-    // location retrieved by the Fused Location Provider.
     private Location mLastKnownLocation;
 
     // Keys for storing activity state.
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
 
-    // Used for selecting the current place.
+    // Used for selecting the Nearby place.
     private static final int M_MAX_ENTRIES = 10;
-    private String[] mLikelyPlaceNames;
-    private String[] mLikelyPlaceAddresses;
-    private String[] mLikelyPlaceAttributions;
-    private LatLng[] mLikelyPlaceLatLngs;
+    private String[] nearbyPlaceNames;
+    private String[] nearbyPlaceAddresses;
+    private String[] nearbyPlaceAttributions;
+    private LatLng[] nearbyPlaceLatLngs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +78,12 @@ public class MapsActivityIndoor extends AppCompatActivity
             mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
+
+
+        // Build the map.
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
         // Retrieve the content view that renders the map.
         setContentView(R.layout.activity_maps);
@@ -95,11 +96,6 @@ public class MapsActivityIndoor extends AppCompatActivity
 
         // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
-        // Build the map.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
 
     }
 
@@ -122,7 +118,7 @@ public class MapsActivityIndoor extends AppCompatActivity
      */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.current_place_menu, menu);
+        getMenuInflater().inflate(R.menu.indoor_map_menu, menu);
         return true;
     }
 
@@ -146,12 +142,6 @@ public class MapsActivityIndoor extends AppCompatActivity
     @Override
     public void onMapReady(GoogleMap map) {
         mMap = map;
-        //mMap.addMarker(new MarkerOptions()
-        //        .position(new LatLng(13.746834,100.534572))
-         //       .title("Mandarin Oriental Shop")
-         //       .zIndex(1.0f));
-        // Use a custom info window adapter to handle multiple lines of text in the
-        // info window contents.
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
 
             @Override
@@ -174,6 +164,7 @@ public class MapsActivityIndoor extends AppCompatActivity
 
                 return infoWindow;
             }
+
         });
 
         // Prompt the user for permission.
@@ -184,6 +175,7 @@ public class MapsActivityIndoor extends AppCompatActivity
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
+        init();
     }
 
     /**
@@ -205,11 +197,7 @@ public class MapsActivityIndoor extends AppCompatActivity
                             mLastKnownLocation = task.getResult();
                             mMap.moveCamera(CameraUpdateFactory
                                     .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-                            mMap.setIndoorEnabled(true);
                             mMap.getUiSettings().setZoomControlsEnabled(true);
-                            //mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(
-                            //        new LatLng(mLastKnownLocation.getLatitude(),
-                            //                mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
                         } else {
                             Log.d(TAG, "Current location is null. Using defaults.");
                             Log.e(TAG, "Exception: %s", task.getException());
@@ -297,19 +285,19 @@ public class MapsActivityIndoor extends AppCompatActivity
                                 }
 
                                 int i = 0;
-                                mLikelyPlaceNames = new String[count];
-                                mLikelyPlaceAddresses = new String[count];
-                                mLikelyPlaceAttributions = new String[count];
-                                mLikelyPlaceLatLngs = new LatLng[count];
+                                nearbyPlaceNames = new String[count];
+                                nearbyPlaceAddresses = new String[count];
+                                nearbyPlaceAttributions = new String[count];
+                                nearbyPlaceLatLngs = new LatLng[count];
 
                                 for (PlaceLikelihood placeLikelihood : likelyPlaces) {
                                     // Build a list of likely places to show the user.
-                                    mLikelyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
-                                    mLikelyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+                                    nearbyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+                                    nearbyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
                                             .getAddress();
-                                    mLikelyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+                                    nearbyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
                                             .getAttributions();
-                                    mLikelyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+                                    nearbyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
 
                                     i++;
                                     if (i > (count - 1)) {
@@ -353,16 +341,16 @@ public class MapsActivityIndoor extends AppCompatActivity
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // The "which" argument contains the position of the selected item.
-                LatLng markerLatLng = mLikelyPlaceLatLngs[which];
-                String markerSnippet = mLikelyPlaceAddresses[which];
-                if (mLikelyPlaceAttributions[which] != null) {
-                    markerSnippet = markerSnippet + "\n" + mLikelyPlaceAttributions[which];
+                LatLng markerLatLng = nearbyPlaceLatLngs[which];
+                String markerSnippet = nearbyPlaceAddresses[which];
+                if (nearbyPlaceAttributions[which] != null) {
+                    markerSnippet = markerSnippet + "\n" + nearbyPlaceAttributions[which];
                 }
 
                 // Add a marker for the selected place, with an info window
                 // showing information about that place.
                 mMap.addMarker(new MarkerOptions()
-                        .title(mLikelyPlaceNames[which])
+                        .title(nearbyPlaceNames[which])
                         .position(markerLatLng)
                         .snippet(markerSnippet));
 
@@ -375,7 +363,7 @@ public class MapsActivityIndoor extends AppCompatActivity
         // Display the dialog.
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle(R.string.pick_place)
-                .setItems(mLikelyPlaceNames, listener)
+                .setItems(nearbyPlaceNames, listener)
                 .show();
     }
 
@@ -389,7 +377,6 @@ public class MapsActivityIndoor extends AppCompatActivity
         try {
             if (mLocationPermissionGranted) {
                 mMap.setMyLocationEnabled(true);
-                mMap.setIndoorEnabled(true);
                 mMap.getUiSettings().setMyLocationButtonEnabled(true);
             } else {
                 mMap.setMyLocationEnabled(false);
@@ -400,6 +387,10 @@ public class MapsActivityIndoor extends AppCompatActivity
         } catch (SecurityException e)  {
             Log.e("Exception: %s", e.getMessage());
         }
+    }
+
+    private void init(){
+        mMap.setIndoorEnabled(true);
     }
 
 }
