@@ -28,6 +28,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
@@ -59,7 +60,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     private static final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1;
     private boolean mLocationPermissionGranted;
     private Location mLastKnownLocation;
-
+    int PLACE_PICKER_REQUEST = 1;
     // Keys for storing activity state.
     private static final String KEY_CAMERA_POSITION = "camera_position";
     private static final String KEY_LOCATION = "location";
@@ -397,13 +398,24 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     }
 
     private void click(){
-        mMap.setOnMapLongClickListener(new OnMapLongClickListener() {
-            public void onMapLongClick(LatLng arg0) {
-                mMap.addMarker(new MarkerOptions().position(arg0)
-                        .title(String.valueOf(arg0.latitude)
-                                + ", " + String.valueOf(arg0.longitude)));
-            }
+        mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+            public boolean onMarkerClick(Marker arg0) {
+                mMap.addMarker(new MarkerOptions().position(arg0.getPosition())
+                        .title(String.valueOf(arg0.getTitle())));
+                Toast.makeText(getApplicationContext()
+                        , "Select Store " + String.valueOf(arg0.getId())
+                        , Toast.LENGTH_SHORT).show();
+               return true;
+           }
         });
+
+        //mMap.setOnMapLongClickListener(new OnMapLongClickListener() {
+        //    public void onMapLongClick(LatLng arg0) {
+        //        mMap.addMarker(new MarkerOptions().position(arg0)
+        //                .title(String.valueOf(arg0.latitude)
+        //                        + ", " + String.valueOf(arg0.longitude)));
+        //    }
+        //});
 
         //mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
         //    public boolean onMarkerClick(Marker arg0) {
@@ -415,18 +427,19 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
          //   }
         //});
     }
-    private void initStore(){
+    public void initStore(){
         //ทำ ชั้น1
         int storeValue = 10;
         String[] storeName = {"Store A","Store B","Store C","Store D","Store E","Store F","Store G","Store H","Store I","Store J"};
-        String[] storeDetail = {"Zara","Aveda","P&P Jewelry","Nine West","Gem Pavilion","Le Beau","Jaspal","Paul Smith","Swarovski","Emporio Armani"};
-        double[] lat = {13.7459431,13.7461714,13.7477914,13.7470003,13.7472172,13.7474774,13.7465448,13.746345,13.7470251,13.7461424};
-        double[] lng = {100.5350679,100.5347399,100.5349507,100.5343358,100.5345048,100.5346324,100.5342816,100.5344458,100.5344745,100.5343722};
+        String[] storeDetail = {"Zara","Aveda","P&P Jewelry","Nine West","Gems Pavilion","Le Beau","Jaspal","Paul Smith","Swarovski","Emporio Armani"};
+        double[] lat = {13.7458379,13.7460369,13.747905,13.7468646,13.747441,13.7476286,13.7466783,13.7462979,13.7472052,13.7460543};
+        double[] lng = {100.5354161,100.535018,100.5349539,100.5341774,100.5347373,100.5349237,100.5341949,100.5346495,100.5345737,100.5343196};
         for (int i = 0 ;i < storeValue ; i++) {
             mMap.addMarker(new MarkerOptions()
                     .position(new LatLng(lat[i], lng[i]))
                     .title(storeName[i])
-                    .snippet(storeDetail[i]));
+                    .snippet(storeDetail[i])
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         }
     }
 }
