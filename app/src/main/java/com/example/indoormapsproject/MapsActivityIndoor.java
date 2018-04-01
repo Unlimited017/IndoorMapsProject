@@ -39,8 +39,7 @@ import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 /**
  * An activity that displays a map showing the place at the device's current location.
  */
-public class MapsActivityIndoor extends AppCompatActivity
-        implements OnMapReadyCallback {
+public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyCallback{
     private static final String TAG = MapsActivityIndoor.class.getSimpleName();
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
@@ -62,11 +61,12 @@ public class MapsActivityIndoor extends AppCompatActivity
     private static final String KEY_LOCATION = "location";
 
     // Used for selecting the Nearby place.
-    private static final int M_MAX_ENTRIES = 10;
+    private static final int M_MAX_ENTRIES = 2;
     private String[] nearbyPlaceNames;
     private String[] nearbyPlaceAddresses;
     private String[] nearbyPlaceAttributions;
     private LatLng[] nearbyPlaceLatLngs;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -388,20 +388,23 @@ public class MapsActivityIndoor extends AppCompatActivity
 
     private void init(){
         mMap.setIndoorEnabled(true);
+        click();
+    }
 
+    private void click(){
         mMap.setOnMapClickListener(new OnMapClickListener() {
-            public void onMapClick(LatLng selectPlace) {
-                mMap.addMarker(new MarkerOptions().position(selectPlace)
-                        .title(String.valueOf(selectPlace.latitude)
-                                + ", " + String.valueOf(selectPlace.longitude)));
+            public void onMapClick(LatLng arg0) {
+                mMap.addMarker(new MarkerOptions().position(arg0)
+                        .title(String.valueOf(arg0.latitude)
+                                + ", " + String.valueOf(arg0.longitude)));
             }
         });
 
         mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-            public boolean onMarkerClick(Marker selectPlace) {
-                selectPlace.remove();
+            public boolean onMarkerClick(Marker arg0) {
+                arg0.remove();
                 Toast.makeText(getApplicationContext()
-                        , "Remove Marker " + String.valueOf(selectPlace.getId())
+                        , "Remove Marker " + String.valueOf(arg0.getId())
                         , Toast.LENGTH_SHORT).show();
                 return true;
             }
