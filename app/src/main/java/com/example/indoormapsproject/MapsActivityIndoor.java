@@ -35,7 +35,12 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
+import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
+import com.google.android.gms.maps.model.IndoorBuilding;
+import com.google.android.gms.maps.model.IndoorLevel;
+
+import java.util.List;
 /**
  * An activity that displays a map showing the place at the device's current location.
  */
@@ -43,7 +48,6 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     private static final String TAG = MapsActivityIndoor.class.getSimpleName();
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
-
     // The entry points to the Places API.
     private GeoDataClient mGeoDataClient;
     private PlaceDetectionClient mPlaceDetectionClient;
@@ -61,7 +65,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     private static final String KEY_LOCATION = "location";
 
     // Used for selecting the Nearby place.
-    private static final int M_MAX_ENTRIES = 2;
+    private static final int M_MAX_ENTRIES = 10;
     private String[] nearbyPlaceNames;
     private String[] nearbyPlaceAddresses;
     private String[] nearbyPlaceAttributions;
@@ -388,27 +392,41 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
     private void init(){
         mMap.setIndoorEnabled(true);
+        initStore();
         click();
     }
 
     private void click(){
-        mMap.setOnMapClickListener(new OnMapClickListener() {
-            public void onMapClick(LatLng arg0) {
+        mMap.setOnMapLongClickListener(new OnMapLongClickListener() {
+            public void onMapLongClick(LatLng arg0) {
                 mMap.addMarker(new MarkerOptions().position(arg0)
                         .title(String.valueOf(arg0.latitude)
                                 + ", " + String.valueOf(arg0.longitude)));
             }
         });
 
-        mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-            public boolean onMarkerClick(Marker arg0) {
-                arg0.remove();
-                Toast.makeText(getApplicationContext()
-                        , "Remove Marker " + String.valueOf(arg0.getId())
-                        , Toast.LENGTH_SHORT).show();
-                return true;
-            }
-        });
+        //mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
+        //    public boolean onMarkerClick(Marker arg0) {
+        //        arg0.remove();
+        //        Toast.makeText(getApplicationContext()
+        //                , "Remove Marker " + String.valueOf(arg0.getId())
+        //                , Toast.LENGTH_SHORT).show();
+         //       return true;
+         //   }
+        //});
     }
-
+    private void initStore(){
+        //ทำ ชั้น1
+        int storeValue = 10;
+        String[] storeName = {"Store A","Store B","Store C","Store D","Store E","Store F","Store G","Store H","Store I","Store J"};
+        String[] storeDetail = {"Zara","Aveda","P&P Jewelry","Nine West","Gem Pavilion","Le Beau","Jaspal","Paul Smith","Swarovski","Emporio Armani"};
+        double[] lat = {13.7459431,13.7461714,13.7477914,13.7470003,13.7472172,13.7474774,13.7465448,13.746345,13.7470251,13.7461424};
+        double[] lng = {100.5350679,100.5347399,100.5349507,100.5343358,100.5345048,100.5346324,100.5342816,100.5344458,100.5344745,100.5343722};
+        for (int i = 0 ;i < storeValue ; i++) {
+            mMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(lat[i], lng[i]))
+                    .title(storeName[i])
+                    .snippet(storeDetail[i]));
+        }
+    }
 }
