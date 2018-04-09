@@ -16,6 +16,7 @@ import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.content.res.Resources;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
@@ -40,6 +41,7 @@ import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.model.IndoorBuilding;
 import com.google.android.gms.maps.model.IndoorLevel;
+import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.util.List;
 /**
@@ -177,7 +179,20 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
+
+        try {
+            boolean success = mMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, R.raw.style_json));
+
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e(TAG, "Can't find style. Error: ", e);
+        }
         init();
+
     }
 
     /**
@@ -394,7 +409,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     private void init(){
         mMap.setIndoorEnabled(true);
         initStore();
-        click();
+        //click();
     }
 
     private void click(){
@@ -409,23 +424,6 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
            }
         });
 
-        //mMap.setOnMapLongClickListener(new OnMapLongClickListener() {
-        //    public void onMapLongClick(LatLng arg0) {
-        //        mMap.addMarker(new MarkerOptions().position(arg0)
-        //                .title(String.valueOf(arg0.latitude)
-        //                        + ", " + String.valueOf(arg0.longitude)));
-        //    }
-        //});
-
-        //mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-        //    public boolean onMarkerClick(Marker arg0) {
-        //        arg0.remove();
-        //        Toast.makeText(getApplicationContext()
-        //                , "Remove Marker " + String.valueOf(arg0.getId())
-        //                , Toast.LENGTH_SHORT).show();
-         //       return true;
-         //   }
-        //});
     }
     public void initStore(){
         //ทำ ชั้น1
