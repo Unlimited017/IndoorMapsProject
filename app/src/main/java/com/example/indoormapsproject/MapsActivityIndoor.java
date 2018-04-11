@@ -74,6 +74,8 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     private String[] nearbyPlaceAttributions;
     private LatLng[] nearbyPlaceLatLngs;
 
+    private int bottom_select = 1;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -413,6 +415,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     }
 
     private void click(){
+
         mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
             public boolean onMarkerClick(Marker arg0) {
                 mMap.addMarker(new MarkerOptions().position(arg0.getPosition())
@@ -420,11 +423,34 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 Toast.makeText(getApplicationContext()
                         , "Select Store " + String.valueOf(arg0.getId())
                         , Toast.LENGTH_SHORT).show();
+                bottom_select = 0;
                return true;
            }
         });
-
     }
+
+    public void onClick(View v){
+        if (v.getId() == R.id.select){
+            if (bottom_select == 1) {
+                Toast.makeText(getApplicationContext(), "Select Store", Toast.LENGTH_SHORT).show();
+                click();
+            }
+            else{
+                initStore();
+                bottom_select = 1;
+            }
+        }
+
+        else if (v.getId() == R.id.start_cal){
+            if (bottom_select == 1){
+                Toast.makeText(getApplicationContext(),"Please, Select Store",Toast.LENGTH_SHORT).show();
+            }
+            else if (bottom_select == 0){
+                Toast.makeText(getApplicationContext(), "Start Calculate Path", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     public void initStore(){
         //ทำ ชั้น1
         int storeValue = 10;
