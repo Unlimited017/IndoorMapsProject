@@ -1,8 +1,10 @@
 package com.example.indoormapsproject;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -44,10 +46,11 @@ import com.google.android.gms.maps.model.IndoorLevel;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
 import java.util.List;
+
 /**
  * An activity that displays a map showing the place at the device's current location.
  */
-public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyCallback{
+public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyCallback {
     private static final String TAG = MapsActivityIndoor.class.getSimpleName();
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
@@ -75,6 +78,10 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     private LatLng[] nearbyPlaceLatLngs;
 
     private int bottom_select = 1;
+    private int count_select = 0;
+
+    double cur_lat, cur_long;
+    double end_lat, end_long;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,18 +95,14 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
         // Retrieve the content view that renders the map.
         setContentView(R.layout.activity_maps);
-
         // Build the map.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-
         // Construct a GeoDataClient.
         mGeoDataClient = Places.getGeoDataClient(this, null);
-
         // Construct a PlaceDetectionClient.
         mPlaceDetectionClient = Places.getPlaceDetectionClient(this, null);
-
         // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
 
@@ -182,6 +185,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
 
+        // Change Style
         try {
             boolean success = mMap.setMapStyle(
                     MapStyleOptions.loadRawResourceStyle(
@@ -227,7 +231,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                     }
                 });
             }
-        } catch (SecurityException e)  {
+        } catch (SecurityException e) {
             Log.e("Exception: %s", e.getMessage());
         }
     }
@@ -285,8 +289,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         if (mLocationPermissionGranted) {
             // Get the likely places - that is, the businesses and other points of interest that
             // are the best match for the device's current location.
-            @SuppressWarnings("MissingPermission") final
-            Task<PlaceLikelihoodBufferResponse> placeResult =
+            @SuppressWarnings("MissingPermission") final Task<PlaceLikelihoodBufferResponse> placeResult =
                     mPlaceDetectionClient.getCurrentPlace(null);
             placeResult.addOnCompleteListener
                     (new OnCompleteListener<PlaceLikelihoodBufferResponse>() {
@@ -403,19 +406,66 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 mLastKnownLocation = null;
                 getLocationPermission();
             }
-        } catch (SecurityException e)  {
+        } catch (SecurityException e) {
             Log.e("Exception: %s", e.getMessage());
         }
     }
 
-    private void init(){
+    private void init() {
         mMap.setIndoorEnabled(true);
         initStore();
-        //click();
+    }
+
+    public void onClick(View v) {
+        if (v.getId() == R.id.select) {
+            if (bottom_select == 1) {
+                Toast.makeText(getApplicationContext(), "Select Store", Toast.LENGTH_SHORT).show();
+                click();
+            } else {
+                initStore();
+                bottom_select = 1;
+                count_select = 0;
+            }
+        } else if (v.getId() == R.id.start_cal) {
+            if (bottom_select == 1) {
+                Toast.makeText(getApplicationContext(), "Please, Select Store", Toast.LENGTH_SHORT).show();
+                end_lat = 0;
+                end_long = 0;
+            } else if (bottom_select == 0) {
+                cur_lat = mLastKnownLocation.getLatitude();
+                cur_long = mLastKnownLocation.getLongitude();
+
+                //double result = distance(cur_lat,cur_long,end_lat,end_long);
+                float result[] = new float[10];
+                mLastKnownLocation.distanceBetween(cur_lat,cur_long,end_lat,end_long,result);
+                Toast.makeText(getApplicationContext(),"ระยะทาง " + (int)result[0] + " เมตร",Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getApplicationContext(),"distance "+result,Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+    public double degreesToRadians(double degrees) {
+        return degrees * Math.PI / 180;
+    }
+
+    // Reference function distanceBetween
+    public double distance(double lat1,double lon1,double lat2,double lon2) {
+        double earthRadius = 6371e3;
+
+        double dLat = degreesToRadians(lat2-lat1);
+        double dLon = degreesToRadians(lon2-lon1);
+
+        lat1 = degreesToRadians(lat1);
+        lat2 = degreesToRadians(lat2);
+
+        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return earthRadius * c;
     }
 
     private void click(){
-
         mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
             public boolean onMarkerClick(Marker arg0) {
                 mMap.addMarker(new MarkerOptions().position(arg0.getPosition())
@@ -423,32 +473,12 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 Toast.makeText(getApplicationContext()
                         , "Select Store " + String.valueOf(arg0.getId())
                         , Toast.LENGTH_SHORT).show();
+                end_lat = arg0.getPosition().latitude;
+                end_long = arg0.getPosition().longitude;
                 bottom_select = 0;
-               return true;
-           }
+                return true;
+            }
         });
-    }
-
-    public void onClick(View v){
-        if (v.getId() == R.id.select){
-            if (bottom_select == 1) {
-                Toast.makeText(getApplicationContext(), "Select Store", Toast.LENGTH_SHORT).show();
-                click();
-            }
-            else{
-                initStore();
-                bottom_select = 1;
-            }
-        }
-
-        else if (v.getId() == R.id.start_cal){
-            if (bottom_select == 1){
-                Toast.makeText(getApplicationContext(),"Please, Select Store",Toast.LENGTH_SHORT).show();
-            }
-            else if (bottom_select == 0){
-                Toast.makeText(getApplicationContext(), "Start Calculate Path", Toast.LENGTH_SHORT).show();
-            }
-        }
     }
 
     public void initStore(){
