@@ -77,11 +77,12 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     private String[] nearbyPlaceAttributions;
     private LatLng[] nearbyPlaceLatLngs;
 
-    private int bottom_select = 1;
-    private int count_select = 0;
+    public int bottom_select = 1;
+    public int countSelect = 1;
 
-    double cur_lat, cur_long;
-    double end_lat, end_long;
+    public double[] mapLat = new double[100];
+    public double[] mapLong = new double[100];
+    public int[][] distanceP = new int[100][100];
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -424,48 +425,30 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
             } else {
                 initStore();
                 bottom_select = 1;
-                count_select = 0;
+                countSelect = 1;
+
             }
         } else if (v.getId() == R.id.start_cal) {
             if (bottom_select == 1) {
                 Toast.makeText(getApplicationContext(), "Please, Select Store", Toast.LENGTH_SHORT).show();
-                end_lat = 0;
-                end_long = 0;
-            } else if (bottom_select == 0) {
-                cur_lat = mLastKnownLocation.getLatitude();
-                cur_long = mLastKnownLocation.getLongitude();
+                }
+            else if (bottom_select == 0) {
+                mapLat[0] = mLastKnownLocation.getLatitude();
+                mapLong[0] = mLastKnownLocation.getLongitude();
 
-                //double result = distance(cur_lat,cur_long,end_lat,end_long);
                 float result[] = new float[10];
-                mLastKnownLocation.distanceBetween(cur_lat,cur_long,end_lat,end_long,result);
-                Toast.makeText(getApplicationContext(),"ระยะทาง " + (int)result[0] + " เมตร",Toast.LENGTH_SHORT).show();
-                //Toast.makeText(getApplicationContext(),"distance "+result,Toast.LENGTH_SHORT).show();
+                for (int i = 0; i < countSelect ; i++){
+                    for (int j = 1; j < countSelect;j++) {
+                        Location.distanceBetween(mapLat[i], mapLong[i], mapLat[j], mapLong[j], result);
+                        distanceP[i][j] = (int)result[0];
+                    }
+                }
+                Toast.makeText(getApplicationContext(),"ระยะทาง 1 = " + distanceP[0][1] + " เมตร " + " ระยะทาง 2 = " + distanceP[1][2] + " เมตร",Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-
-    public double degreesToRadians(double degrees) {
-        return degrees * Math.PI / 180;
-    }
-
-    // Reference function distanceBetween
-    public double distance(double lat1,double lon1,double lat2,double lon2) {
-        double earthRadius = 6371e3;
-
-        double dLat = degreesToRadians(lat2-lat1);
-        double dLon = degreesToRadians(lon2-lon1);
-
-        lat1 = degreesToRadians(lat1);
-        lat2 = degreesToRadians(lat2);
-
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return earthRadius * c;
-    }
-
-    private void click(){
+    public void click(){
         mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
             public boolean onMarkerClick(Marker arg0) {
                 mMap.addMarker(new MarkerOptions().position(arg0.getPosition())
@@ -473,9 +456,10 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 Toast.makeText(getApplicationContext()
                         , "Select Store " + String.valueOf(arg0.getId())
                         , Toast.LENGTH_SHORT).show();
-                end_lat = arg0.getPosition().latitude;
-                end_long = arg0.getPosition().longitude;
+                mapLat[countSelect] = arg0.getPosition().latitude;
+                mapLong[countSelect] = arg0.getPosition().longitude;
                 bottom_select = 0;
+                countSelect = countSelect+1;
                 return true;
             }
         });
@@ -495,5 +479,9 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                     .snippet(storeDetail[i])
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         }
+    }
+
+    public void test(){
+
     }
 }
