@@ -428,7 +428,9 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 countSelect = 1;
 
             }
-        } else if (v.getId() == R.id.start_cal) {
+        }
+
+        if (v.getId() == R.id.start_cal) {
             if (bottom_select == 1) {
                 Toast.makeText(getApplicationContext(), "Please, Select Store", Toast.LENGTH_SHORT).show();
                 }
@@ -438,13 +440,18 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
                 float result[] = new float[10];
                 for (int i = 0; i < countSelect ; i++){
-                    for (int j = 1; j < countSelect;j++) {
+                    for (int j = 0; j < countSelect;j++) {
                         Location.distanceBetween(mapLat[i], mapLong[i], mapLat[j], mapLong[j], result);
                         distanceP[i][j] = (int)result[0];
                     }
                 }
-                Toast.makeText(getApplicationContext(),"ระยะทาง 1 = " + distanceP[0][1] + " เมตร " + " ระยะทาง 2 = " + distanceP[1][2] + " เมตร",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"ระยะทาง 1 = " + distanceP[0][0] + " เมตร " + " ระยะทาง 2 = " + distanceP[0][1] + " เมตร",Toast.LENGTH_SHORT).show();
             }
+        }
+
+        if (v.getId() == R.id.goToShop){
+            mMap.moveCamera(CameraUpdateFactory
+                    .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
         }
     }
 
@@ -479,9 +486,5 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                     .snippet(storeDetail[i])
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         }
-    }
-
-    public void test(){
-
     }
 }
