@@ -1,10 +1,9 @@
 package com.example.indoormapsproject;
 
-import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -41,10 +40,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
-import com.google.android.gms.maps.model.IndoorBuilding;
-import com.google.android.gms.maps.model.IndoorLevel;
 import com.google.android.gms.maps.model.MapStyleOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -82,7 +80,8 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
     public double[] mapLat = new double[100];
     public double[] mapLong = new double[100];
-    public int[][] distanceP = new int[100][100];
+    public int[][] distanceData = new int[100][100];
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,7 +92,6 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
             mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
             mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
         }
-
         // Retrieve the content view that renders the map.
         setContentView(R.layout.activity_maps);
         // Build the map.
@@ -106,7 +104,6 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         mPlaceDetectionClient = Places.getPlaceDetectionClient(this, null);
         // Construct a FusedLocationProviderClient.
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
-
     }
 
     /**
@@ -153,13 +150,11 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     public void onMapReady(GoogleMap map) {
         mMap = map;
         mMap.setInfoWindowAdapter(new GoogleMap.InfoWindowAdapter() {
-
             @Override
             // Return null here, so that getInfoContents() is called next.
             public View getInfoWindow(Marker arg0) {
                 return null;
             }
-
             @Override
             public View getInfoContents(Marker marker) {
                 // Inflate the layouts for the info window, title and snippet.
@@ -174,7 +169,6 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
                 return infoWindow;
             }
-
         });
 
         // Prompt the user for permission.
@@ -185,6 +179,9 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
         // Get the current location of the device and set the position of the map.
         getDeviceLocation();
+
+        //Initial Maps
+        init();;
 
         // Change Style
         try {
@@ -198,18 +195,12 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         } catch (Resources.NotFoundException e) {
             Log.e(TAG, "Can't find style. Error: ", e);
         }
-        init();
-
     }
 
     /**
      * Gets the current location of the device, and positions the map's camera.
      */
     private void getDeviceLocation() {
-        /*
-         * Get the best and most recent location of the device, which may be null in rare
-         * cases when a location is not available.
-         */
         try {
             if (mLocationPermissionGranted) {
                 Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
@@ -237,15 +228,12 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         }
     }
 
-
     /**
      * Prompts the user for permission to use the device location.
      */
     private void getLocationPermission() {
         /*
-         * Request location permission, so that we can get the location of the
-         * device. The result of the permission request is handled by a callback,
-         * onRequestPermissionsResult.
+        Check Permission
          */
         if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
                 android.Manifest.permission.ACCESS_FINE_LOCATION)
@@ -262,9 +250,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
      * Handles the result of the request for location permissions.
      */
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String permissions[],
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode,@NonNull String permissions[],@NonNull int[] grantResults) {
         mLocationPermissionGranted = false;
         switch (requestCode) {
             case PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION: {
@@ -321,7 +307,6 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                                     nearbyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
                                             .getAttributions();
                                     nearbyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
-
                                     i++;
                                     if (i > (count - 1)) {
                                         break;
@@ -334,7 +319,6 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                                 // Show a dialog offering the user the list of likely places, and add a
                                 // marker at the selected place.
                                 openPlacesDialog();
-
                             } else {
                                 Log.e(TAG, "Exception: %s", task.getException());
                             }
@@ -426,7 +410,6 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 initStore();
                 bottom_select = 1;
                 countSelect = 1;
-
             }
         }
 
@@ -442,10 +425,14 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 for (int i = 0; i < countSelect ; i++){
                     for (int j = 0; j < countSelect;j++) {
                         Location.distanceBetween(mapLat[i], mapLong[i], mapLat[j], mapLong[j], result);
-                        distanceP[i][j] = (int)result[0];
+                        distanceData[i][j] = (int)result[0];
+                        output.distance[i][j] = (int)result[0];
+
                     }
                 }
-                Toast.makeText(getApplicationContext(),"ระยะทาง 1 = " + distanceP[0][0] + " เมตร " + " ระยะทาง 2 = " + distanceP[0][1] + " เมตร",Toast.LENGTH_SHORT).show();
+                output.count = countSelect;
+                openOutput();
+                //Toast.makeText(getApplicationContext(),"ระยะทาง = " + distanceData[0][1]+ "ระยะทาง = " + distanceData[1][3],Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -453,6 +440,12 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
             mMap.moveCamera(CameraUpdateFactory
                     .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
         }
+    }
+
+    //To activity output
+    private void openOutput() {
+        Intent intent = new Intent(this,output.class);
+        startActivity(intent);
     }
 
     public void click(){
@@ -486,5 +479,13 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                     .snippet(storeDetail[i])
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         }
+    }
+
+    public int[][] getDistance() {
+        return distanceData.clone();
+    }
+
+    public int getCount(){
+        return countSelect;
     }
 }
