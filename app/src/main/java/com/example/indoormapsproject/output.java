@@ -23,13 +23,13 @@ public class output extends AppCompatActivity {
                 backMainActivity();
             }
         });
-        TextView outText = findViewById(R.id.outputText);
-        for (int i = 0; i < count ; i++) {
-            for (int j = 0 ; j < count ; j++) {
-            outText.setText(outText.getText()+"\t\t" + distance[i][j]);
-            }
-            outText.setText(outText.getText()+"\n");
-        }
+        //TextView outText = findViewById(R.id.outputText);
+        //for (int i = 0; i < count ; i++) {
+        //    for (int j = 0 ; j < count ; j++) {
+        //    outText.setText(outText.getText()+"\t\t" + distance[i][j]);
+        //    }
+        //    outText.setText(outText.getText()+"\n");
+        //}
     }
 
     public void backMainActivity() {

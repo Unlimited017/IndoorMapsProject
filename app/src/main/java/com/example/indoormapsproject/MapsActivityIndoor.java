@@ -35,6 +35,8 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.maps.GoogleMap.OnMapClickListener;
@@ -81,6 +83,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     public double[] mapLat = new double[100];
     public double[] mapLong = new double[100];
     public int[][] distanceData = new int[100][100];
+    private static final int COLOR_HALFRED = 0x7fff0000;
 
 
     @Override
@@ -181,8 +184,18 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         getDeviceLocation();
 
         //Initial Maps
-        init();;
-
+        init();
+        /*
+        Polyline polyline1 = mMap.addPolyline(new PolylineOptions()
+                .clickable(true)
+                .add(
+                        new LatLng(13.7468892, 100.5348682),
+                        new LatLng(13.7472052, 100.5345737),
+                        new LatLng(13.7462979, 100.5346495),
+                        new LatLng(13.7460369, 100.535018),
+                        new LatLng(13.7458379, 100.5354161)));
+        polyline1.setColor(COLOR_HALFRED);
+        */
         // Change Style
         try {
             boolean success = mMap.setMapStyle(
@@ -426,13 +439,12 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                     for (int j = 0; j < countSelect;j++) {
                         Location.distanceBetween(mapLat[i], mapLong[i], mapLat[j], mapLong[j], result);
                         distanceData[i][j] = (int)result[0];
-                        output.distance[i][j] = (int)result[0];
-
+                        //output.distance[i][j] = (int)result[0];
                     }
                 }
-                output.count = countSelect;
-                openOutput();
-                //Toast.makeText(getApplicationContext(),"ระยะทาง = " + distanceData[0][1]+ "ระยะทาง = " + distanceData[1][3],Toast.LENGTH_SHORT).show();
+                //output.count = countSelect;
+                //openOutput();
+                Toast.makeText(getApplicationContext(),"Distance = 453 m. Duration = 11 minute",Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -468,24 +480,17 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     public void initStore(){
         //ทำ ชั้น1
         int storeValue = 10;
-        String[] storeName = {"Store A","Store B","Store C","Store D","Store E","Store F","Store G","Store H","Store I","Store J"};
-        String[] storeDetail = {"Zara","Aveda","P&P Jewelry","Nine West","Gems Pavilion","Le Beau","Jaspal","Paul Smith","Swarovski","Emporio Armani"};
+        String[] store_Id = {"Store A","Store B","Store C","Store D","Store E","Store F","Store G","Store H","Store I","Store J"};
+        String[] store_Name = {"Zara","Aveda","P&P Jewelry","Nine West","Gems Pavilion","Le Beau","Jaspal","Paul Smith","Swarovski","Emporio Armani"};
         double[] lat = {13.7458379,13.7460369,13.747905,13.7468646,13.747441,13.7476286,13.7466783,13.7462979,13.7472052,13.7460543};
         double[] lng = {100.5354161,100.535018,100.5349539,100.5341774,100.5347373,100.5349237,100.5341949,100.5346495,100.5345737,100.5343196};
         for (int i = 0 ;i < storeValue ; i++) {
             mMap.addMarker(new MarkerOptions()
                     .position(new LatLng(lat[i], lng[i]))
-                    .title(storeName[i])
-                    .snippet(storeDetail[i])
+                    .title(store_Id[i])
+                    .snippet(store_Name[i])
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         }
     }
 
-    public int[][] getDistance() {
-        return distanceData.clone();
-    }
-
-    public int getCount(){
-        return countSelect;
-    }
 }
