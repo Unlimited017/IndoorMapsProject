@@ -433,8 +433,9 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
             else if (bottom_select == 0) {
                 mapLat[0] = mLastKnownLocation.getLatitude();
                 mapLong[0] = mLastKnownLocation.getLongitude();
+                Driver.selectCount = countSelect;
 
-                float result[] = new float[10];
+                /*float result[] = new float[10];
                 for (int i = 0; i < countSelect ; i++){
                     for (int j = 0; j < countSelect;j++) {
                         Location.distanceBetween(mapLat[i], mapLong[i], mapLat[j], mapLong[j], result);
@@ -444,6 +445,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 }
                 //output.count = countSelect;
                 //openOutput();
+                */
                 Toast.makeText(getApplicationContext(),"Distance = 453 m. Duration = 11 minute",Toast.LENGTH_SHORT).show();
             }
         }
@@ -468,8 +470,9 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 Toast.makeText(getApplicationContext()
                         , "Select Store " + String.valueOf(arg0.getId())
                         , Toast.LENGTH_SHORT).show();
-                mapLat[countSelect] = arg0.getPosition().latitude;
-                mapLong[countSelect] = arg0.getPosition().longitude;
+                Driver.selectLat[countSelect] = arg0.getPosition().latitude;
+                Driver.selectLong[countSelect] = arg0.getPosition().longitude;
+                Driver.nameStore[countSelect] = arg0.getTitle();
                 bottom_select = 0;
                 countSelect = countSelect+1;
                 return true;
