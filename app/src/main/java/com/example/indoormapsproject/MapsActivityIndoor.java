@@ -47,9 +47,9 @@ import com.google.android.gms.maps.model.MapStyleOptions;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * An activity that displays a map showing the place at the device's current location.
- */
+import static com.example.indoormapsproject.Driver.initStore;
+import static com.example.indoormapsproject.Driver.initialStores;
+
 public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyCallback {
     private static final String TAG = MapsActivityIndoor.class.getSimpleName();
     private GoogleMap mMap;
@@ -80,9 +80,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     public int bottom_select = 1;
     public int countSelect = 1;
 
-    public double[] mapLat = new double[100];
-    public double[] mapLong = new double[100];
-    public int[][] distanceData = new int[100][100];
+    static double distanceAll;
     private static final int COLOR_HALFRED = 0x7fff0000;
 
 
@@ -162,12 +160,12 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
             public View getInfoContents(Marker marker) {
                 // Inflate the layouts for the info window, title and snippet.
                 View infoWindow = getLayoutInflater().inflate(R.layout.custom_info_contents,
-                        (FrameLayout) findViewById(R.id.map), false);
+                        findViewById(R.id.map), false);
 
-                TextView title = ((TextView) infoWindow.findViewById(R.id.title));
+                TextView title = infoWindow.findViewById(R.id.title);
                 title.setText(marker.getTitle());
 
-                TextView snippet = ((TextView) infoWindow.findViewById(R.id.snippet));
+                TextView snippet = infoWindow.findViewById(R.id.snippet);
                 snippet.setText(marker.getSnippet());
 
                 return infoWindow;
@@ -185,17 +183,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
         //Initial Maps
         init();
-        /*
-        Polyline polyline1 = mMap.addPolyline(new PolylineOptions()
-                .clickable(true)
-                .add(
-                        new LatLng(13.7468892, 100.5348682),
-                        new LatLng(13.7472052, 100.5345737),
-                        new LatLng(13.7462979, 100.5346495),
-                        new LatLng(13.7460369, 100.535018),
-                        new LatLng(13.7458379, 100.5354161)));
-        polyline1.setColor(COLOR_HALFRED);
-        */
+
         // Change Style
         try {
             boolean success = mMap.setMapStyle(
@@ -217,22 +205,19 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         try {
             if (mLocationPermissionGranted) {
                 Task<Location> locationResult = mFusedLocationProviderClient.getLastLocation();
-                locationResult.addOnCompleteListener(this, new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        if (task.isSuccessful()) {
-                            // Set the map's camera position to the current location of the device.
-                            mLastKnownLocation = task.getResult();
-                            mMap.moveCamera(CameraUpdateFactory
-                                    .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-                            mMap.getUiSettings().setZoomControlsEnabled(true);
-                        } else {
-                            Log.d(TAG, "Current location is null. Using defaults.");
-                            Log.e(TAG, "Exception: %s", task.getException());
-                            mMap.moveCamera(CameraUpdateFactory
-                                    .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-                            mMap.getUiSettings().setMyLocationButtonEnabled(false);
-                        }
+                locationResult.addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        // Set the map's camera position to the current location of the device.
+                        mLastKnownLocation = task.getResult();
+                        mMap.moveCamera(CameraUpdateFactory
+                                .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
+                        mMap.getUiSettings().setZoomControlsEnabled(true);
+                    } else {
+                        Log.d(TAG, "Current location is null. Using defaults.");
+                        Log.e(TAG, "Exception: %s", task.getException());
+                        mMap.moveCamera(CameraUpdateFactory
+                                .newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
+                        mMap.getUiSettings().setMyLocationButtonEnabled(false);
                     }
                 });
             }
@@ -292,49 +277,46 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
             @SuppressWarnings("MissingPermission") final Task<PlaceLikelihoodBufferResponse> placeResult =
                     mPlaceDetectionClient.getCurrentPlace(null);
             placeResult.addOnCompleteListener
-                    (new OnCompleteListener<PlaceLikelihoodBufferResponse>() {
-                        @Override
-                        public void onComplete(@NonNull Task<PlaceLikelihoodBufferResponse> task) {
-                            if (task.isSuccessful() && task.getResult() != null) {
-                                PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
+                    (task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            PlaceLikelihoodBufferResponse likelyPlaces = task.getResult();
 
-                                // Set the count, handling cases where less than 5 entries are returned.
-                                int count;
-                                if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
-                                    count = likelyPlaces.getCount();
-                                } else {
-                                    count = M_MAX_ENTRIES;
-                                }
-
-                                int i = 0;
-                                nearbyPlaceNames = new String[count];
-                                nearbyPlaceAddresses = new String[count];
-                                nearbyPlaceAttributions = new String[count];
-                                nearbyPlaceLatLngs = new LatLng[count];
-
-                                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                                    // Build a list of likely places to show the user.
-                                    nearbyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
-                                    nearbyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
-                                            .getAddress();
-                                    nearbyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
-                                            .getAttributions();
-                                    nearbyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
-                                    i++;
-                                    if (i > (count - 1)) {
-                                        break;
-                                    }
-                                }
-
-                                // Release the place likelihood buffer, to avoid memory leaks.
-                                likelyPlaces.release();
-
-                                // Show a dialog offering the user the list of likely places, and add a
-                                // marker at the selected place.
-                                openPlacesDialog();
+                            // Set the count, handling cases where less than 5 entries are returned.
+                            int count;
+                            if (likelyPlaces.getCount() < M_MAX_ENTRIES) {
+                                count = likelyPlaces.getCount();
                             } else {
-                                Log.e(TAG, "Exception: %s", task.getException());
+                                count = M_MAX_ENTRIES;
                             }
+
+                            int i = 0;
+                            nearbyPlaceNames = new String[count];
+                            nearbyPlaceAddresses = new String[count];
+                            nearbyPlaceAttributions = new String[count];
+                            nearbyPlaceLatLngs = new LatLng[count];
+
+                            for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                                // Build a list of likely places to show the user.
+                                nearbyPlaceNames[i] = (String) placeLikelihood.getPlace().getName();
+                                nearbyPlaceAddresses[i] = (String) placeLikelihood.getPlace()
+                                        .getAddress();
+                                nearbyPlaceAttributions[i] = (String) placeLikelihood.getPlace()
+                                        .getAttributions();
+                                nearbyPlaceLatLngs[i] = placeLikelihood.getPlace().getLatLng();
+                                i++;
+                                if (i > (count - 1)) {
+                                    break;
+                                }
+                            }
+
+                            // Release the place likelihood buffer, to avoid memory leaks.
+                            likelyPlaces.release();
+
+                            // Show a dialog offering the user the list of likely places, and add a
+                            // marker at the selected place.
+                            openPlacesDialog();
+                        } else {
+                            Log.e(TAG, "Exception: %s", task.getException());
                         }
                     });
         } else {
@@ -357,27 +339,24 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
      */
     private void openPlacesDialog() {
         // Ask the user to choose the place where they are now.
-        DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // The "which" argument contains the position of the selected item.
-                LatLng markerLatLng = nearbyPlaceLatLngs[which];
-                String markerSnippet = nearbyPlaceAddresses[which];
-                if (nearbyPlaceAttributions[which] != null) {
-                    markerSnippet = markerSnippet + "\n" + nearbyPlaceAttributions[which];
-                }
-
-                // Add a marker for the selected place, with an info window
-                // showing information about that place.
-                mMap.addMarker(new MarkerOptions()
-                        .title(nearbyPlaceNames[which])
-                        .position(markerLatLng)
-                        .snippet(markerSnippet));
-
-                // Position the map's camera at the location of the marker.
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
-                        DEFAULT_ZOOM));
+        DialogInterface.OnClickListener listener = (dialog, which) -> {
+            // The "which" argument contains the position of the selected item.
+            LatLng markerLatLng = nearbyPlaceLatLngs[which];
+            String markerSnippet = nearbyPlaceAddresses[which];
+            if (nearbyPlaceAttributions[which] != null) {
+                markerSnippet = markerSnippet + "\n" + nearbyPlaceAttributions[which];
             }
+
+            // Add a marker for the selected place, with an info window
+            // showing information about that place.
+            mMap.addMarker(new MarkerOptions()
+                    .title(nearbyPlaceNames[which])
+                    .position(markerLatLng)
+                    .snippet(markerSnippet));
+
+            // Position the map's camera at the location of the marker.
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(markerLatLng,
+                    DEFAULT_ZOOM));
         };
 
         // Display the dialog.
@@ -411,7 +390,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
 
     private void init() {
         mMap.setIndoorEnabled(true);
-        initStore();
+        initStoreMarker();
     }
 
     public void onClick(View v) {
@@ -420,9 +399,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 Toast.makeText(getApplicationContext(), "Select Store", Toast.LENGTH_SHORT).show();
                 click();
             } else {
-                initStore();
-                bottom_select = 1;
-                countSelect = 1;
+                reset();
             }
         }
 
@@ -431,22 +408,24 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 Toast.makeText(getApplicationContext(), "Please, Select Store", Toast.LENGTH_SHORT).show();
                 }
             else if (bottom_select == 0) {
-                mapLat[0] = mLastKnownLocation.getLatitude();
-                mapLong[0] = mLastKnownLocation.getLongitude();
+                Driver driver = new Driver();
+                ArrayList<Store> stores = new ArrayList<Store>();
+
+                Driver.selectLat[0] = mLastKnownLocation.getLatitude();
+                Driver.selectLong[0] = mLastKnownLocation.getLongitude();
+                Driver.nameStore[0] = "CurrentLocation";
                 Driver.selectCount = countSelect;
 
-                /*float result[] = new float[10];
-                for (int i = 0; i < countSelect ; i++){
-                    for (int j = 0; j < countSelect;j++) {
-                        Location.distanceBetween(mapLat[i], mapLong[i], mapLat[j], mapLong[j], result);
-                        distanceData[i][j] = (int)result[0];
-                        //output.distance[i][j] = (int)result[0];
-                    }
-                }
-                //output.count = countSelect;
-                //openOutput();
+                driver.initStore();
+                stores.addAll(driver.initialStores);
+                distanceAll = driver.printShortestRoute(new NearestNeighbor().findShortestRoute(stores));
+                /*
+                Polyline polyline1 = mMap.addPolyline(new PolylineOptions()
+                .clickable(true)
+                .add(new LatLng(Driver.selectLat[0],Driver.selectLong[0])));
+                polyline1.setColor(COLOR_HALFRED);
                 */
-                Toast.makeText(getApplicationContext(),"Distance = 453 m. Duration = 11 minute",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),driver.nameStore[0] + " " + driver.nameStore[1] + " " + distanceAll,Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -456,6 +435,13 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         }
     }
 
+    private void reset(){
+        mMap.clear();
+        initStoreMarker();
+        bottom_select = 1;
+        countSelect = 1;
+    }
+
     //To activity output
     private void openOutput() {
         Intent intent = new Intent(this,output.class);
@@ -463,24 +449,22 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     }
 
     public void click(){
-        mMap.setOnMarkerClickListener(new OnMarkerClickListener() {
-            public boolean onMarkerClick(Marker arg0) {
-                mMap.addMarker(new MarkerOptions().position(arg0.getPosition())
-                        .title(String.valueOf(arg0.getTitle())));
-                Toast.makeText(getApplicationContext()
-                        , "Select Store " + String.valueOf(arg0.getId())
-                        , Toast.LENGTH_SHORT).show();
-                Driver.selectLat[countSelect] = arg0.getPosition().latitude;
-                Driver.selectLong[countSelect] = arg0.getPosition().longitude;
-                Driver.nameStore[countSelect] = arg0.getTitle();
-                bottom_select = 0;
-                countSelect = countSelect+1;
-                return true;
-            }
+        mMap.setOnMarkerClickListener(arg0 -> {
+            mMap.addMarker(new MarkerOptions().position(arg0.getPosition())
+                    .title(String.valueOf(arg0.getTitle())));
+            Toast.makeText(getApplicationContext()
+                    , "Select Store " + String.valueOf(arg0.getId())
+                    , Toast.LENGTH_SHORT).show();
+            Driver.selectLat[countSelect] = arg0.getPosition().latitude;
+            Driver.selectLong[countSelect] = arg0.getPosition().longitude;
+            Driver.nameStore[countSelect] = arg0.getTitle();
+            bottom_select = 0;
+            countSelect = countSelect+1;
+            return true;
         });
     }
 
-    public void initStore(){
+    public void initStoreMarker(){
         //ทำ ชั้น1
         int storeValue = 10;
         String[] store_Id = {"Store A","Store B","Store C","Store D","Store E","Store F","Store G","Store H","Store I","Store J"};
@@ -495,5 +479,4 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                     .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
         }
     }
-
 }
