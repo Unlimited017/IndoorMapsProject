@@ -49,6 +49,7 @@ import java.util.List;
 
 import static com.example.indoormapsproject.Driver.initStore;
 import static com.example.indoormapsproject.Driver.initialStores;
+import static com.example.indoormapsproject.Driver.selectCount;
 
 public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyCallback {
     private static final String TAG = MapsActivityIndoor.class.getSimpleName();
@@ -416,16 +417,16 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 Driver.nameStore[0] = "CurrentLocation";
                 Driver.selectCount = countSelect;
 
-                driver.initStore();
-                stores.addAll(driver.initialStores);
-                distanceAll = driver.printShortestRoute(new NearestNeighbor().findShortestRoute(stores));
-                /*
+                Driver.initStore();
+                stores.addAll(Driver.initialStores);
+                driver.printShortestRoute(new NearestNeighbor().findShortestRoute(stores));
+            /*
                 Polyline polyline1 = mMap.addPolyline(new PolylineOptions()
                 .clickable(true)
                 .add(new LatLng(Driver.selectLat[0],Driver.selectLong[0])));
                 polyline1.setColor(COLOR_HALFRED);
-                */
-                Toast.makeText(getApplicationContext(),driver.nameStore[0] + " " + driver.nameStore[1] + " " + distanceAll,Toast.LENGTH_SHORT).show();
+            */
+                Toast.makeText(getApplicationContext(),driver.nameStore[0] + " " + driver.nameStore[selectCount-1] + " " + distanceAll,Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -438,8 +439,15 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     private void reset(){
         mMap.clear();
         initStoreMarker();
+        for (int i = 0 ; i < selectCount ; i++){
+            Driver.nameStore[i] = null;
+            Driver.selectLat[i] = 0;
+            Driver.selectLong[i] = 0;
+        }
+        distanceAll = 0;
         bottom_select = 1;
         countSelect = 1;
+        Driver.initialStores = null;
     }
 
     //To activity output
@@ -452,9 +460,9 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
         mMap.setOnMarkerClickListener(arg0 -> {
             mMap.addMarker(new MarkerOptions().position(arg0.getPosition())
                     .title(String.valueOf(arg0.getTitle())));
-            Toast.makeText(getApplicationContext()
-                    , "Select Store " + String.valueOf(arg0.getId())
-                    , Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext()
+            //        , "Select Store " + String.valueOf(arg0.getId())
+            //        , Toast.LENGTH_SHORT).show();
             Driver.selectLat[countSelect] = arg0.getPosition().latitude;
             Driver.selectLong[countSelect] = arg0.getPosition().longitude;
             Driver.nameStore[countSelect] = arg0.getTitle();
