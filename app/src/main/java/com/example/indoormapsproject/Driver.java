@@ -2,6 +2,11 @@ package com.example.indoormapsproject;
 
 import android.util.Log;
 
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -13,11 +18,12 @@ public class Driver {
     public static ArrayList<Store> initialStores = new ArrayList<Store>();
 
     public static void initStore(){
-
+        initialStores = new ArrayList<Store>();
         for(int i = 1 ; i < selectCount ; i++ ){
             Store a = new Store(nameStore[i],selectLat[i],selectLong[i]);
             Log.i("LAT",Double.toString(a.getLatitude()));
             Log.i("LONG",Double.toString(a.getLongitude()));
+
             initialStores.add(a);
         }
         Store b = new Store(nameStore[0],selectLat[0],selectLong[0]);
@@ -38,5 +44,6 @@ public class Driver {
 //        System.out.println("w/ total distance: "+ shortestRoute.calculateTotalDistance());
 //        System.out.println("--------------------------------------------------------");
         MapsActivityIndoor.distanceAll =  shortestRoute.calculateTotalDistance();
+        MapsActivityIndoor.durationAll =  shortestRoute.calculateTotalDuration();
     }
 }
