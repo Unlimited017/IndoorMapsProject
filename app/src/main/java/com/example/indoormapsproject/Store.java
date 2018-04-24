@@ -33,7 +33,7 @@ public class Store {
         double deltaLongitude = (store.getLongitude() - this.getLongitude());
         double a = Math.pow(Math.sin(deltaLatitude / 2D), 2D) +
                    Math.cos(this.getLatitude()) * Math.cos(store.getLatitude()) * Math.pow(Math.sin(deltaLongitude / 2D), 2D);
-        double ret = (double) (EARTH_EQUATORIAL_RADIUS * 2D * Math.atan2(Math.sqrt(a),Math.sqrt(1D-a))/1000.0);
+        double ret = (double) (EARTH_EQUATORIAL_RADIUS * 2D * Math.atan2(Math.sqrt(a),Math.sqrt(1D-a))*1000);
         Log.i("measure distance"+store.getName(),Double.toString(ret));
         return ret;
     }
