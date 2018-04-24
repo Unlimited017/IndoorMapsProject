@@ -53,6 +53,7 @@ import static com.example.indoormapsproject.Driver.selectCount;
 
 public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyCallback {
     private static final String TAG = MapsActivityIndoor.class.getSimpleName();
+
     private GoogleMap mMap;
     private CameraPosition mCameraPosition;
     // The entry points to the Places API.
@@ -82,6 +83,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
     public int countSelect = 1;
 
     static double distanceAll;
+    static double durationAll;
     private static final int COLOR_HALFRED = 0x7fff0000;
 
 
@@ -420,13 +422,15 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
                 Driver.initStore();
                 stores.addAll(Driver.initialStores);
                 driver.printShortestRoute(new NearestNeighbor().findShortestRoute(stores));
-            /*
-                Polyline polyline1 = mMap.addPolyline(new PolylineOptions()
-                .clickable(true)
-                .add(new LatLng(Driver.selectLat[0],Driver.selectLong[0])));
-                polyline1.setColor(COLOR_HALFRED);
-            */
-                Toast.makeText(getApplicationContext(),driver.nameStore[0] + " " + driver.nameStore[selectCount-1] + " " + distanceAll,Toast.LENGTH_SHORT).show();
+
+                for(int i = 1 ; i < Driver.selectCount ; i++ ) {
+                    Polyline polyline1 = mMap.addPolyline(new PolylineOptions()
+                            .clickable(true)
+                            .add(new LatLng(Driver.selectLat[i-1], Driver.selectLong[i-1]), new LatLng(Driver.selectLat[i], Driver.selectLong[i])));
+                    polyline1.setColor(COLOR_HALFRED);
+                }
+                Toast.makeText(getApplicationContext(),driver.nameStore[0] + " " + driver.nameStore[selectCount-1] + "\nDistance : " + distanceAll + " m. " +
+                        "\nDuration : " + (int) (durationAll/60) + " min " ,Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -445,6 +449,7 @@ public class MapsActivityIndoor extends AppCompatActivity implements OnMapReadyC
             Driver.selectLong[i] = 0;
         }
         distanceAll = 0;
+        durationAll = 0;
         bottom_select = 1;
         countSelect = 1;
         Driver.initialStores = null;
